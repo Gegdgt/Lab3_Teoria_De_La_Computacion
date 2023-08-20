@@ -1,4 +1,6 @@
 import graphviz
+import networkx 
+import matplot.lib.pyplot as plt 
 
 class Node:
     def _init_(self, value):
@@ -120,5 +122,7 @@ def main() :
         print("Regex:", regex) 
         drawAST(ast_root) 
         print() 
+
+
 
 main()
