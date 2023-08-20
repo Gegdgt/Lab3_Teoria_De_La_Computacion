@@ -111,18 +111,84 @@ def dibujarNodo(punto, nodo):
         punto.borde(str(id(nodo)), str(id(nodo.derecha))) 
         dibujarNodo(punto, nodo.derecha) 
 
-def main() : 
-    with open('expresiones2.txt', 'r', encoding='utf-8') as archivo: 
-        lines = archivo.readlines() 
+def generateNFA(node):
+    class NFAState:
+        def __init__(self):
+            self.transitions = {} 
+    
+    def create_nfa_state():
+        return NFAState()
+    
+    def connect_states(state1, state2, input_symbol):
+        if input_symbol not in state1.transitions:
+            state1.transitions[input_symbol] = []
+        state1.transitions[input_symbol].append(state2)
+    
+    def traverse_ast(current_node):
+        if current_node.value.isalpha() or current_node.value == '𝜀':
+            start_state = create_nfa_state()
+            accepting_state = create_nfa_state()
+            connect_states(start_state, accepting_state, current_node.value)
+            return start_state, accepting_state
+        elif current_node.value == '.':
+            left_start, left_accepting = traverse_ast(current_node.left)
+            right_start, right_accepting = traverse_ast(current_node.right)
+            connect_states(left_accepting, right_start, '𝜀')
+            return left_start, right_accepting
+        elif current_node.value == '|':
+            start_state = create_nfa_state()
+            accepting_state = create_nfa_state()
+            left_start, left_accepting = traverse_ast(current_node.left)
+            right_start, right_accepting = traverse_ast(current_node.right)
+            connect_states(start_state, left_start, '𝜀')
+            connect_states(start_state, right_start, '𝜀')
+            connect_states(left_accepting, accepting_state, '𝜀')
+            connect_states(right_accepting, accepting_state, '𝜀')
+            return start_state, accepting_state
+        elif current_node.value == '*':
+            start_state = create_nfa_state()
+            accepting_state = create_nfa_state()
+            child_start, child_accepting = traverse_ast(current_node.left)
+            connect_states(start_state, accepting_state, '𝜀')
+            connect_states(start_state, child_start, '𝜀')
+            connect_states(child_accepting, accepting_state, '𝜀')
+            connect_states(child_accepting, child_start, '𝜀')
+            return start_state, accepting_state
+    
+    start_state, accepting_state = traverse_ast(node)
+    nfa = {start_state: start_state, accepting_state: accepting_state}
+    return nfa
 
-    for line in lines: 
-        regex = line.strip() 
-        postfix_expr = infixToPostfix(regex) 
-        ast_root = postfixToAST(postfix_expr) 
-        print("Regex:", regex) 
-        drawAST(ast_root) 
-        print() 
+def visualizeNFA(nfa):
+    graph = nx.DiGraph()
+
+    for state in nfa:
+        graph.add_node(state)
+
+        for input_symbol, target_states in nfa[state].transitions.items():
+            for target_state in target_states:
+                graph.add_edge(state, target_state, label=input_symbol)
+
+    pos = nx.spring_layout(graph)
+    labels = nx.get_edge_attributes(graph, 'label')
+    nx.draw(graph, pos, with_labels=True, node_size=500, font_size=10)
+    nx.draw_networkx_edge_labels(graph, pos, edge_labels=labels)
+    plt.show()
 
 
+def main():
+    with open('expresiones2.txt', 'r', encoding='utf-8') as archivo:
+        lines = archivo.readlines()
 
-main()
+    for line in lines:
+        regex = line.strip()
+        postfix_expr = infixToPostfix(regex)
+        ast_root = postfixToAST(postfix_expr)
+        
+        nfa = generateNFA(ast_root)  # Generate NFA from AST
+        visualizeNFA(nfa)  # Visualize the NFA
+
+        print()
+
+if __name__ == "__main__":
+    main()
