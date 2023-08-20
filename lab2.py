@@ -3,7 +3,7 @@ import networkx
 import matplot.lib.pyplot as plt 
 
 class Node:
-    def _init_(self, value):
+    def __init__(self, value):
         self.value = value
         self.left = None
         self.right = None
@@ -101,15 +101,15 @@ def dibujarAST(nodo):
     punto.vista()
 
 def dibujarNodo(punto, nodo): 
-    punto.nodo(str(id(nodo)), etiqueta=nodo.valor) 
+    punto.nodo(str(id(nodo)), label=nodo.valor) 
 
     if nodo.izquierda: 
-        punto.edge(str(id(nodo)), str(id(nodo.izquierda ))) 
-        dibujarNodo(punto, nodo.izquierda) 
+        punto.edge(str(id(nodo)), str(id(nodo.left ))) 
+        dibujarNodo(punto, nodo.left) 
 
     if nodo.derecha: 
-        punto.borde(str(id(nodo)), str(id(nodo.derecha))) 
-        dibujarNodo(punto, nodo.derecha) 
+        punto.borde(str(id(nodo)), str(id(nodo.right))) 
+        dibujarNodo(punto, nodo.right) 
 
 def generateNFA(node):
     class NFAState:
@@ -185,8 +185,8 @@ def main():
         postfix_expr = infixToPostfix(regex)
         ast_root = postfixToAST(postfix_expr)
         
-        nfa = generateNFA(ast_root)  # Generate NFA from AST
-        visualizeNFA(nfa)  # Visualize the NFA
+        nfa = generateNFA(ast_root) 
+        visualizeNFA(nfa)  
 
         print()
 
